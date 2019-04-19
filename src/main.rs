@@ -35,7 +35,7 @@ fn main() {
     while !root.window_closed() {
         state.render_to(&mut con);
 
-        blit(&mut con, (0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT), &mut root, (0, 0), 1.0, 1.0);
+        blit(&con, (0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT), &mut root, (0, 0), 1.0, 1.0);
         root.flush();
 
         state.clear(&mut con);
@@ -165,7 +165,7 @@ impl GameState {
     }
 
     pub fn render_to(&self, con: &mut Offscreen) {
-        &self.player.draw(con);
+        self.player.draw(con);
         for o in &self.objects {
             o.draw(con);
         }
@@ -183,7 +183,7 @@ impl GameState {
     }
 
     pub fn clear(&self, con: &mut Offscreen) {
-        &self.player.clear(con);
+        self.player.clear(con);
         for o in &self.objects {
             o.clear(con);
         }
