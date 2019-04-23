@@ -24,7 +24,7 @@ fn main() {
 
     tcod::system::set_fps(LIMIT_FPS);
 
-    let player = Object::new(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, '@', colors::WHITE);
+    let player = Object::new(21, 16, '@', colors::WHITE);
     let mut map = make_map(); 
     map[30][22] = Tile::wall();
     map[50][22] = Tile::wall();
@@ -103,6 +103,24 @@ enum PlayerCommand {
     Unknown,
 }
 
+type Map = Vec<Vec<Tile>>;
+fn make_map() -> Map {
+    let map = vec![vec![Tile::wall(); MAP_HEIGHT as usize]; MAP_WIDTH as usize];
+    let room1 = Rect::new(20, 15, 10, 15);
+    let room2 = Rect::new(50, 15, 10, 15);
+
+    add_room(room2, add_room(room1, map))
+}
+
+fn add_room(room: Rect, map: Map) -> Map {
+    let mut m = map.clone();
+    for x in (room.x1 + 1)..room.x2 {
+        for y in (room.y1 +1)..room.y2 {
+            m[x as usize][y as usize] = Tile::empty();
+        }
+    }
+    m
+}
 #[derive(Clone, Copy, Debug)]
 struct Object {
     x: i32,
@@ -148,10 +166,6 @@ impl Tile {
     }
 }
 
-type Map = Vec<Vec<Tile>>;
-fn make_map() -> Map {
-    vec![vec![Tile::empty(); MAP_HEIGHT as usize]; MAP_WIDTH as usize]
-}
 
 #[derive(Clone, Debug)]
 struct GameState {
@@ -159,6 +173,7 @@ struct GameState {
     objects: Vec<Object>,
     map: Map,
 }
+
 impl GameState {
     pub fn new(player: Object, objects: Vec<Object>, map: Map) -> Self {
         GameState { player, objects, map }
@@ -189,3 +204,18 @@ impl GameState {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+struct Rect {
+    x1: i32,
+    x2: i32,
+    y1: i32,
+    y2: i32,
+}
+
+impl Rect {
+    pub fn new ( x: i32, y: i32, w: i32, h: i32 ) -> Self {
+        Rect { x1: x, y1: y, x2: x + w, y2: y + h }
+    }
+}
+
