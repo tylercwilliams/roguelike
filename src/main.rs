@@ -2,6 +2,7 @@ extern crate tcod;
 
 use tcod::console::*;
 use tcod::colors::{self, Color};
+use std::cmp;
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
@@ -43,9 +44,7 @@ fn main() {
         let key = read_keys(&mut root);
         match key {
             //player movement inputs
-            PlayerCommand::MoveUp   |
-            PlayerCommand::MoveDown |
-            PlayerCommand::MoveLeft |
+            PlayerCommand::MoveUp   | PlayerCommand::MoveDown | PlayerCommand::MoveLeft |
             PlayerCommand::MoveRight => { 
                 let new_player =  handle_inputs(key,  &state.player, &state.map); 
                 state = GameState::new(new_player, state.objects, state.map);
@@ -56,6 +55,21 @@ fn main() {
             PlayerCommand::Exit => break,
             PlayerCommand::Unknown => {},
         }
+    }
+}
+
+fn read_keys(root: &mut Root) -> PlayerCommand {
+    use tcod::input::Key;
+    use tcod::input::KeyCode::*;
+    
+    match root.wait_for_keypress(true) {
+        Key { code: Up, .. } | Key { code: Char, printable: 'k', .. } => PlayerCommand::MoveUp,
+        Key { code: Down, .. } | Key { code: Char, printable: 'j', .. } => PlayerCommand::MoveDown,
+        Key { code: Left, .. } | Key { code: Char, printable: 'h', .. } => PlayerCommand::MoveLeft,
+        Key { code: Right, .. } | Key { code: Char, printable: 'l', .. } => PlayerCommand::MoveRight, 
+        Key { code: Enter, alt: true, .. } => PlayerCommand::FullScreen ,
+        Key { code: Escape, .. } => PlayerCommand::Exit,
+        _ => PlayerCommand::Unknown
     }
 }
 
@@ -76,21 +90,6 @@ fn can_move(object: &Object, map: &Map, dx: i32, dy: i32) -> bool {
     //
     if let Some(y) = map.get((object.x + dx) as usize)
         .and_then(|x| x.get((object.y + dy) as usize)) { !y.blocked } else { false }
-}
-
-fn read_keys(root: &mut Root) -> PlayerCommand {
-    use tcod::input::Key;
-    use tcod::input::KeyCode::*;
-    
-    match root.wait_for_keypress(true) {
-        Key { code: Up, .. } => PlayerCommand::MoveUp,
-        Key { code: Down, .. } => PlayerCommand::MoveDown,
-        Key { code: Left, .. } =>  PlayerCommand::MoveLeft,
-        Key { code: Right, .. } => PlayerCommand::MoveRight, 
-        Key { code: Enter, alt: true, .. } => PlayerCommand::FullScreen ,
-        Key { code: Escape, .. } => PlayerCommand::Exit,
-        _ => PlayerCommand::Unknown
-    }
 }
    
 enum PlayerCommand {
@@ -121,6 +120,23 @@ fn add_room(room: Rect, map: Map) -> Map {
     }
     m
 }
+
+fn create_h_tunel(x1: i32, x2: i32, y: i32, map: Map) -> Map {
+    let mut m = map.clone();
+    for x in  cmp::min(x1, x2)..cmp::max(x1, x2) {
+        m[x as usize][y as usize] = Tile::empty();
+    }
+    m
+}
+
+fn create_v_tunel(y1: i32, y2: i32, x: i32, map: Map) -> Map {
+    let mut m = map.clone();
+    for y in  cmp::min(y1, y2)..cmp::max(y1, y2) {
+        m[y as usize][x as usize] = Tile::empty();
+    }
+    m
+}
+
 #[derive(Clone, Copy, Debug)]
 struct Object {
     x: i32,
@@ -165,7 +181,6 @@ impl Tile {
         Tile{ blocked: true, block_sight: true }
     }
 }
-
 
 #[derive(Clone, Debug)]
 struct GameState {
